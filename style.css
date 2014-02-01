@@ -2,8 +2,16 @@ body {
 	
 }
 
-#chartdiv {
+#chart {
 	height:	350px;
 	width:	350px;
 /*	border: 2px black solid; */
+}
+
+.latex {
+	display: none;
+}
+
+.choices {
+	display: inline-block
 }

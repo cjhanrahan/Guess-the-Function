@@ -7,16 +7,21 @@
 		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
     	<script src="/lib/jqplot/jquery.jqplot.min.js"></script>
 		<script src="/lib/jqplot/jqplot.canvasOverlay.min.js"></script>
-		<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 		<link rel="stylesheet" type="text/css" href="/lib/jqplot/jquery.jqplot.min.css">
 		<link rel="stylesheet" type="text/css" href="style.css">
 		<script src="chart.js"></script>
+		<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 	</head>
     <body>
     	<center>
 	        <h1>Guess the function</h1>
-	    	<div id="chartdiv"></div>
-			<div id="answer"></div>
+	    	<div id="chart"></div>
+			<div id="choices" class="latex">
+				<h2>Choices</h2>
+			</div>
+			<div id="answer" class="latex">
+				<h2>Answer</h2>
+			</div>
 		</center>
 	</body>
 </html>
