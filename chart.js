@@ -1,12 +1,8 @@
 $(document).ready(function() {
 	
-	//set up shortcut aliases
-	var func = MathFunctions,
-		ut = Utils,
-		ui = UserInterface,
-		state = QuizState,
-		logic = QuizLogic;
-		
+	//hide latex until it's done being processed
+	UserInterface.hideLatex();
+	
 	//initialize the state to the first question
 	QuizLogic.getChoices();
 	QuizLogic.pickAnswer();
@@ -18,12 +14,14 @@ $(document).ready(function() {
 		
 	//Tell MathJax to make the answer visible when as soon
 	//as the LaTeX is done being processed
-	MathJax.Hub.Queue(ui.showLatex);
+	MathJax.Hub.Queue(UserInterface.showLatex);
+	
 });
 
 var MainInterface = {
 		newQuestion: function() {
 			
+			UserInterface.clearButtons();
 			QuizLogic.getChoices();
 			QuizLogic.pickAnswer();
 			
@@ -31,11 +29,24 @@ var MainInterface = {
 			UserInterface.writeChoices();
 			UserInterface.writeAnswer();
 			UserInterface.refreshLatex();
+		},
+
+		guess: function(guessIndex) {
+			QuizState.phase = 'a';
+			if(guessIndex === QuizState.ansIndex) {
+				
+			}
+			else {
+				
+			}
 		}
 }
 
 var Settings = {
+		rightColor: '#00CC00',
+		wrongColor: '#CC0000'
 }
+
 var QuizState = {
 		//either 'q' for question or 'a' for answer
 		phase: 'q',
@@ -43,11 +54,13 @@ var QuizState = {
 		choices: [null, null, null, null],
 		//index of right answer
 		ansIndex: null,
-		
+		//jqplot object for the chart
+		chartRef: null,
 		//return the answer object 
 		getAnswer: function() {
 			return this.choices[this.ansIndex]
 		}
+
 }
 
 var QuizLogic = {
@@ -56,41 +69,26 @@ var QuizLogic = {
 		//pick four random functions
 		getChoices: function(){
 			
-//			//shuffle names in MathFunctions, use first 4
-//			var funcNames = Object.keys(MathFunctions);
-//			
-//			//if this isn't the first question
-//			var prevAnswer = QuizState.getAnswer(),
-//				prevIndex = funcNames.indexOf(prevAnswer);
-//				console.log("prevIndex: " + prevIndex);
-//			if(prevAnswer !== null && prevIndex !== -1) {
-//				console.log('Splicing: ' + funcNames[prevIndex].str);
-//				funcNames.splice(prevIndex,1);
-//				
-//			}
-//			randFuncs =  Utils.shuffleArray(funcNames, 4);
-//			
-//			//build an array of the corresponding values in MathFunctions
-//			var funcValues = [];
-//			for(var i=0; i<randFuncs.length; ++i) {
-//				funcValues.push(MathFunctions[randFuncs[i]]);
-//			}
-//			QuizState.choices = funcValues;
-			
+			//store all the own property values of MathFunctions 
+			//in funcValues
 			var funcNames = Object.keys(MathFunctions);
 			var currValue, funcValues = [];
 			for(var i=0; i<funcNames.length; i++) {
 				currValue = MathFunctions[funcNames[i]];
+				//push only if this isn't the same answer as
+				//the last question
 				if (currValue !== QuizState.getAnswer())
 					funcValues.push(currValue);
 			}
 			QuizState.choices = Utils.shuffleArray(funcValues, 4); 
 		},
 		
-		//pick one of the choices
+		//pick one of the choices to be defined as the right answer
 		pickAnswer: function() {
 			QuizState.ansIndex = Utils.randNum(QuizState.choices.length);
 		}
+		
+		
 }
 
 var MathFunctions = {
@@ -124,6 +122,7 @@ var MathFunctions = {
 		str: 'sqrt(x)',
 		latex: '\\sqrt{x}'
 	}
+
 }
 
 var Utils = {
@@ -156,9 +155,60 @@ var Utils = {
 
 
 var UserInterface = {
+
+	drawChart: function() {
+		//get the function that will be the right answer
+		var  qs = QuizState;
+		var funcToDraw = qs.choices[qs.ansIndex];
+		QuizState.chartRef = this.plot(funcToDraw, -10, 10, 0.1);
+		
+	},
+	
+	writeChoices: function() {
+		$('.choice').text(function(index, text){
+			return "$$" + QuizState.choices[index].latex + "$$";
+		});
+	},
+	
+	writeAnswer: function(){
+		$('#answer').text("$$" + QuizState.getAnswer().latex + "$$");
+	},
+	
+	showLatex: function() {
+		$('.latex').fadeIn(500);
+	},
+	
+	hideLatex: function() {
+		$('.latex').hide();
+	},
+	
+	refreshLatex: function() {
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub]);
+		console.log('ahh refreshing');
+	},
+	
+	correctAns: function() {
+		//turn function green
+		var chart = QuizState.chartRef;
+		chart.replot({seriesColors: [Settings.rightColor]});
+	
+		//turn button green
+		$('.choice').eq(QuizState.ansIndex)
+					.css('background-color', Settings.rightColor);
+	},
+	
+	wrongAns: function(index) {
+		//turn function graph green
+		
+		//draw wrong choice graph
+	},
+	
+	clearButtons: function(index) {
+		$('.choice').css('background-color', '#FFFFFF')
+	},
+	
 	// plot a function by applying fOfX to points
 	// from min to max, using delta as interval
-	
 	plot: function(mathFunc, min, max, delta){
 		
 		// populate array of discrete points to plot
@@ -186,7 +236,7 @@ var UserInterface = {
 		tickmarks.push(max);
 		
 		// draw graph
-		$.jqplot('chart', [points], {
+		var chart = $.jqplot('chart', [points], {
 			// don't show discreteness of points
 			series:[{showMarker:false}],
 			// both axes contain the same range and tickmarks
@@ -203,7 +253,6 @@ var UserInterface = {
 					label: 'f(x)'
 				}
 			},
-			// limit axes to [min, max]
 			
 			// draw dashed lines for x=0, y=0
 			canvasOverlay: {
@@ -228,36 +277,9 @@ var UserInterface = {
 		          ]
 			}
 		});			
-		return points;
+		return chart;
 	},
 
-	drawChart: function() {
-		//get the function that will be the right answer
-		var  qs = QuizState;
-		var funcToDraw = qs.choices[qs.ansIndex];
-		this.plot(funcToDraw, -10, 10, 0.1);
-	},
-	
-	writeChoices: function() {
-		$('.choice').text(function(index, text){
-			return "$$" + QuizState.choices[index].latex + "$$";
-		});
-	},
-	
-	writeAnswer: function(){
-		$('#answer').text("$$" + QuizState.getAnswer().latex + "$$");
-	},
-	
-	showLatex: function() {
-		$('.latex').fadeIn(500);
-	},
-	
-	refreshLatex: function() {
-		MathJax.Hub.Queue(["Typeset",MathJax.Hub]);
-		console.log('ahh refreshing');
-	}
-	
-	
 }
 
 
