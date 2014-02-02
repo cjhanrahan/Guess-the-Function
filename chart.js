@@ -20,6 +20,16 @@ $(document).ready(function() {
 	MathJax.Hub.Queue(ui.showLatex);
 });
 
+var MainInterface = {
+		newQuestion: function() {
+			QuizLogic.newQuestion();
+			UserInterface.drawChart();
+			UserInterface.writeChoices();
+			UserInterface.writeAnswer();
+			UserInterface.refreshLatex();
+		}
+}
+
 var QuizState = {
 		//either 'q' for question or 'a' for answer
 		phase: 'q',
@@ -41,9 +51,19 @@ var QuizLogic = {
 			this.pickAnswer();
 		},
 		
+		//pick four random functions
 		getChoices: function(){
+			
 			//shuffle names in MathFunctions, use first 4
-			funcNames = Object.keys(MathFunctions);
+			var funcNames = Object.keys(MathFunctions);
+			
+			//if this isn't the first question
+			var prevAnswer = QuizState.getAnswer();
+			if(prevAnswer != null) {
+				var index = funcNames.indexOf(prevAnswer);
+				funcNames.splice(index,1);
+				
+			}
 			randFuncs =  Utils.shuffleArray(funcNames, 4);
 			
 			//build an array of the corresponding values in MathFunctions
@@ -54,6 +74,7 @@ var QuizLogic = {
 			QuizState.choices = funcValues;
 		},
 		
+		//pick one of the choices
 		pickAnswer: function() {
 			QuizState.ansIndex = Utils.randNum(QuizState.choices.length);
 		}
@@ -83,9 +104,13 @@ var MathFunctions = {
 		fn: function(x) {return 1/x;},
 		str: '1/x',
 		latex: 'f(x)=\\frac{1}{x}'
+	},
+	
+	sqrt: {
+		fn: function(x) {return Math.sqrt(x);},
+		str: 'sqrt(x)',
+		latex: '\\sqrt{x}'
 	}
-	
-	
 }
 
 var Utils = {
@@ -196,34 +221,27 @@ var UserInterface = {
 	drawChart: function() {
 		//get the function that will be the right answer
 		var  qs = QuizState;
-		funcToDraw = qs.choices[qs.ansIndex];
-		console.log(funcToDraw.str);
+		var funcToDraw = qs.choices[qs.ansIndex];
 		this.plot(funcToDraw, -10, 10, 0.1);
 	},
 	
 	writeChoices: function() {
-		for(var i=0; i<QuizState.choices.length; i++) {
-			
-			//mark the right answer with an id of #right													
-			var rightId = "";
-			if(i == QuizState.ansIndex)
-				rightId = " id=right";
-			
-			//write latex in span in choices div
-			$('#choices').append(
-					"<div class=choice" + rightId + ">" +
-					"$$"+ QuizState.choices[i].latex + "$$"
-					+ "</span>"
-			);
-		}
+		$('.choice').text(function(index, text){
+			return "$$" + QuizState.choices[index].latex + "$$";
+		});
 	},
 	
 	writeAnswer: function(){
-		$('#answer').append("$$" + QuizState.getAnswer().latex + "$$");
+		$('#answer').text("$$" + QuizState.getAnswer().latex + "$$");
 	},
 	
 	showLatex: function() {
 		$('.latex').fadeIn(500);
+	},
+	
+	refreshLatex: function() {
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub]);
+		console.log('ahh refreshing');
 	}
 	
 	

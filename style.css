@@ -7,10 +7,7 @@ body {
 	width:	350px;
 /*	border: 2px black solid; */
 	display: inline-block;
-/*	margin-top: 60px;*/
-	position: relative;
-	/*top: %50*/
-	margin-top: 65px;
+	margin: 20px 20px 0px 0px;
 }
 
 .latex {
@@ -29,9 +26,9 @@ body {
 
 #choices {
 	display: inline-block;
-	vertical-align: top;
+	position: absolute;
 }
 
 #question {
-	position: relative;
+
 }
