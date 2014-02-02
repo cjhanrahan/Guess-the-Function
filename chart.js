@@ -8,7 +8,8 @@ $(document).ready(function() {
 		logic = QuizLogic;
 		
 	//initialize the state to the first question
-	QuizLogic.newQuestion();
+	QuizLogic.getChoices();
+	QuizLogic.pickAnswer();
 	
 	//write out the first problem
 	UserInterface.drawChart();
@@ -22,7 +23,10 @@ $(document).ready(function() {
 
 var MainInterface = {
 		newQuestion: function() {
-			QuizLogic.newQuestion();
+			
+			QuizLogic.getChoices();
+			QuizLogic.pickAnswer();
+			
 			UserInterface.drawChart();
 			UserInterface.writeChoices();
 			UserInterface.writeAnswer();
@@ -30,6 +34,8 @@ var MainInterface = {
 		}
 }
 
+var Settings = {
+}
 var QuizState = {
 		//either 'q' for question or 'a' for answer
 		phase: 'q',
@@ -46,32 +52,39 @@ var QuizState = {
 
 var QuizLogic = {
 		//updates QuizState for start of a new question
-		newQuestion: function(){
-			this.getChoices();
-			this.pickAnswer();
-		},
 		
 		//pick four random functions
 		getChoices: function(){
 			
-			//shuffle names in MathFunctions, use first 4
+//			//shuffle names in MathFunctions, use first 4
+//			var funcNames = Object.keys(MathFunctions);
+//			
+//			//if this isn't the first question
+//			var prevAnswer = QuizState.getAnswer(),
+//				prevIndex = funcNames.indexOf(prevAnswer);
+//				console.log("prevIndex: " + prevIndex);
+//			if(prevAnswer !== null && prevIndex !== -1) {
+//				console.log('Splicing: ' + funcNames[prevIndex].str);
+//				funcNames.splice(prevIndex,1);
+//				
+//			}
+//			randFuncs =  Utils.shuffleArray(funcNames, 4);
+//			
+//			//build an array of the corresponding values in MathFunctions
+//			var funcValues = [];
+//			for(var i=0; i<randFuncs.length; ++i) {
+//				funcValues.push(MathFunctions[randFuncs[i]]);
+//			}
+//			QuizState.choices = funcValues;
+			
 			var funcNames = Object.keys(MathFunctions);
-			
-			//if this isn't the first question
-			var prevAnswer = QuizState.getAnswer();
-			if(prevAnswer != null) {
-				var index = funcNames.indexOf(prevAnswer);
-				funcNames.splice(index,1);
-				
+			var currValue, funcValues = [];
+			for(var i=0; i<funcNames.length; i++) {
+				currValue = MathFunctions[funcNames[i]];
+				if (currValue !== QuizState.getAnswer())
+					funcValues.push(currValue);
 			}
-			randFuncs =  Utils.shuffleArray(funcNames, 4);
-			
-			//build an array of the corresponding values in MathFunctions
-			var funcValues = [];
-			for(var i=0; i<randFuncs.length; ++i) {
-				funcValues.push(MathFunctions[randFuncs[i]]);
-			}
-			QuizState.choices = funcValues;
+			QuizState.choices = Utils.shuffleArray(funcValues, 4); 
 		},
 		
 		//pick one of the choices
