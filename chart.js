@@ -211,7 +211,7 @@ var UserInterface = {
 			
 			//write latex in span in choices div
 			$('#choices').append(
-					"<span class=choices" + rightId + ">" +
+					"<div class=choice" + rightId + ">" +
 					"$$"+ QuizState.choices[i].latex + "$$"
 					+ "</span>"
 			);

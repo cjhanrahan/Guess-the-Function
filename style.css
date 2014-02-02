@@ -6,12 +6,32 @@ body {
 	height:	350px;
 	width:	350px;
 /*	border: 2px black solid; */
+	display: inline-block;
+/*	margin-top: 60px;*/
+	position: relative;
+	/*top: %50*/
+	margin-top: 65px;
 }
 
 .latex {
 	display: none;
 }
 
-.choices {
-	display: inline-block
+.choice {
+	height: 80px;
+	width: 80px;
+	display: block;
+	border: 3px black solid;
+	border-radius: 5px;
+	padding: 3px;
+	margin: 2px;
+}
+
+#choices {
+	display: inline-block;
+	vertical-align: top;
+}
+
+#question {
+	position: relative;
 }
