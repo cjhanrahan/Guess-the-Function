@@ -43,8 +43,12 @@ var MainInterface = {
 }
 
 var Settings = {
-		rightColor: '#00CC00',
-		wrongColor: '#CC0000'
+		rightColor: '#00FF00',
+		wrongColor: '#FF0000',
+		
+		min: -10,
+		max: 10,
+		delta: 0.1
 }
 
 var QuizState = {
@@ -158,9 +162,10 @@ var UserInterface = {
 
 	drawChart: function() {
 		//get the function that will be the right answer
-		var  qs = QuizState;
-		var funcToDraw = qs.choices[qs.ansIndex];
-		QuizState.chartRef = this.plot(funcToDraw, -10, 10, 0.1);
+		var qs = QuizState,
+			s = Settings,
+			funcToDraw = qs.choices[qs.ansIndex];
+		QuizState.chartRef = this.plot([funcToDraw], s.min, s.max, s.delta);
 		
 	},
 	
@@ -198,35 +203,66 @@ var UserInterface = {
 	},
 	
 	wrongAns: function(index) {
-		//turn function graph green
 		
-		//draw wrong choice graph
+		var s = Settings,
+			rightPoints
+			wrongFunc = QuizState.choices[index];
+
+		//plot right answer and wrong answer on same graph
+		QuizState.chartRef = this.plot(
+				[QuizState.getAnswer(), wrongFunc],
+				-10, 10, 0.1
+		)
+		//color the functions to make right/wrong clearer
+		QuizState.chartRef.replot({seriesColors: [Settings.rightColor, Settings.wrongColor]});
+	
+		//color the buttons to make right/wrong clear
+		$('.choice').eq(QuizState.ansIndex)
+					.css('background-color', Settings.rightColor);
+		$('.choice').eq(index)
+					.css('background-color', Settings.wrongColor);
+		
 	},
 	
 	clearButtons: function(index) {
 		$('.choice').css('background-color', '#FFFFFF')
 	},
 	
-	// plot a function by applying fOfX to points
-	// from min to max, using delta as interval
-	plot: function(mathFunc, min, max, delta){
-		
-		// populate array of discrete points to plot
-		var points = [],
+	generatePoints: function(mathFunc) {
+		var s = Settings,
+			points = [],
 			fn = mathFunc.fn;
-		for(var x=min; x<max; x+=delta) {
+		
+		for(var x=s.min; x<s.max; x+=s.delta) {
 			var fOfX = fn(x);
-			// replace absurd off the chart numbers
-			if(fOfX > 100)
-				points.push([x, 100]);
-			else if(fOfX < -100)
-				points.push([x, -100]);
+			// replace absurd and off the chart numbers
+			var tooFar = 10 * s.max;
+			if(fOfX > tooFar)
+				points.push([x, tooFar]);
+			else if(fOfX < -tooFar)
+				points.push([x, -tooFar]);
 			else
 				points.push([x, fn(x)]);
 		}
 		// push f(max) , even if not equal to min + a multiple of delta
-		points.push([x, fn(max)]);
+		points.push([x, fn(s.max)]);
 		
+		return points;
+	},
+	
+	// plot a function by applying fOfX to points
+	// from min to max, using delta as interval
+	//
+	// returns a chart
+	plot: function(mathFuncs, min, max, delta){		
+		
+		var points, pointsArray = [];
+		for(var i=0; i<mathFuncs.length; i++) {
+			points = this.generatePoints(mathFuncs[i]);
+			pointsArray.push(points);
+		}
+		
+
 		// populate array of tickmarks at integers
 		var tickmarks = [];
 		for (x=min; x<max; x+=2) {
@@ -236,9 +272,11 @@ var UserInterface = {
 		tickmarks.push(max);
 		
 		// draw graph
-		var chart = $.jqplot('chart', [points], {
+		var chart = $.jqplot('chart', pointsArray, {
 			// don't show discreteness of points
-			series:[{showMarker:false}],
+			seriesDefaults:{
+				lineWidth: 4,
+				showMarker:false},
 			// both axes contain the same range and tickmarks
 			axesDefaults: {
 				min: min,
