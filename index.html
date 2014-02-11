@@ -11,26 +11,23 @@
 		<link rel="stylesheet" type="text/css" href="style.css">
 		<script src="chart.js" type="text/javascript"></script>
 		<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+		<script>$(document).ready(GF.MainInterface.setUpQuiz)</script>
 	</head>
     <body>
     	<center>
 	        <h1>Guess the function</h1>
 			<div id="question">
 				<div id="chart"></div>			
-				<div id="choices" class="latex">
-					<span class="choice">me</span>
-					<span class="choice"></span>
-					<span class="choice"></span>
-					<span class="choice"></span>		
-				</div>
+				<table id="choices" class="latex">
+					<tr><td class="choice"></td></tr>
+					<tr><td class="choice"></td></tr>
+					<tr><td class="choice"></td></tr>
+					<tr><td class="choice"></td></tr>
+				</table>
 			</div>
-			<div id="answer" class="latex">
-				<h2>Answer</h2>
-			</div>
+			<p id="dialog"></p>
 			<div id="debugButtons">
-				<button type="button" onclick="MainInterface.newQuestion()">New Question</button>
-				<button type="button" onclick="UserInterface.correctAns()">Correct</button>
-				<button type="button" onclick="UserInterface.wrongAns(3)">Wrong</button>
+				<!--<button type="button" onclick="GF.MainInterface.newQuestion()">New Question</button> -->
 			</div>
 		</center>
 	</body>

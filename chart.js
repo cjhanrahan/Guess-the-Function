@@ -1,49 +1,52 @@
-$(document).ready(function() {
-	
-	//hide latex until it's done being processed
-	UserInterface.hideLatex();
-	
-	//initialize the state to the first question
-	QuizLogic.getChoices();
-	QuizLogic.pickAnswer();
-	
-	//write out the first problem
-	UserInterface.drawChart();
-	UserInterface.writeChoices();
-	UserInterface.writeAnswer();
-		
-	//Tell MathJax to make the answer visible when as soon
-	//as the LaTeX is done being processed
-	MathJax.Hub.Queue(UserInterface.showLatex);
-	
-});
+var GF = {}
 
-var MainInterface = {
+
+
+GF.MainInterface = {
+		
+		setUpQuiz: function() {
+			//hide latex until it's done being processed
+			GF.UserInterface.hideLatex();
+			
+			//initialize the state to the first question
+			GF.QuizLogic.getChoices();
+			GF.QuizLogic.pickAnswer();
+			
+			//write out the first problem
+			GF.UserInterface.drawChart();
+			GF.UserInterface.writeChoices();
+			GF.UserInterface.writeQuesDialog();
+			
+			GF.bindUIEvents();
+			//Tell MathJax to make the answer visible when as soon
+			//as the LaTeX is done being processed
+			MathJax.Hub.Queue(GF.UserInterface.showLatex);
+		},
+		
 		newQuestion: function() {
+			GF.QuizState.phase = 'question';
+			GF.UserInterface.clearButtons();
+			GF.QuizLogic.getChoices();
+			GF.QuizLogic.pickAnswer();
 			
-			UserInterface.clearButtons();
-			QuizLogic.getChoices();
-			QuizLogic.pickAnswer();
-			
-			UserInterface.drawChart();
-			UserInterface.writeChoices();
-			UserInterface.writeAnswer();
-			UserInterface.refreshLatex();
+			GF.UserInterface.drawChart();
+			GF.UserInterface.writeChoices();
+			GF.UserInterface.writeQuesDialog();
+			GF.UserInterface.refreshLatex();
+			GF.bindUIEvents();
 		},
 
+		
 		guess: function(guessIndex) {
-			QuizState.phase = 'a';
-			if(guessIndex === QuizState.ansIndex) {
-				
-			}
-			else {
-				
-			}
+			GF.QuizLogic.guess(guessIndex);
 		}
 }
 
-var Settings = {
-		rightColor: '#00FF00',
+
+
+
+GF.Settings = {
+		rightColor: '#00DD00',
 		wrongColor: '#FF0000',
 		
 		min: -10,
@@ -51,9 +54,9 @@ var Settings = {
 		delta: 0.1
 }
 
-var QuizState = {
-		//either 'q' for question or 'a' for answer
-		phase: 'q',
+GF.QuizState = {
+		//either 'question' or 'answer'
+		phase: 'question',
 		//array of possible answers
 		choices: [null, null, null, null],
 		//index of right answer
@@ -63,11 +66,14 @@ var QuizState = {
 		//return the answer object 
 		getAnswer: function() {
 			return this.choices[this.ansIndex]
-		}
+		},
+		indexPicked: null
+		
+
 
 }
 
-var QuizLogic = {
+GF.QuizLogic = {
 		//updates QuizState for start of a new question
 		
 		//pick four random functions
@@ -75,27 +81,48 @@ var QuizLogic = {
 			
 			//store all the own property values of MathFunctions 
 			//in funcValues
-			var funcNames = Object.keys(MathFunctions);
+			var funcNames = Object.keys(GF.MathFunctions);
 			var currValue, funcValues = [];
 			for(var i=0; i<funcNames.length; i++) {
-				currValue = MathFunctions[funcNames[i]];
+				currValue = GF.MathFunctions[funcNames[i]];
 				//push only if this isn't the same answer as
 				//the last question
-				if (currValue !== QuizState.getAnswer())
+				if (currValue !== GF.QuizState.getAnswer())
 					funcValues.push(currValue);
 			}
-			QuizState.choices = Utils.shuffleArray(funcValues, 4); 
+			GF.QuizState.choices = GF.Utils.shuffleArray(funcValues, 4); 
 		},
 		
 		//pick one of the choices to be defined as the right answer
 		pickAnswer: function() {
-			QuizState.ansIndex = Utils.randNum(QuizState.choices.length);
-		}
+			GF.QuizState.ansIndex = GF.Utils.randNum(GF.QuizState.choices.length);
+		},
 		
+		guess: function(index) {
+			GF.QuizState.indexPicked = index;
+			GF.QuizState.phase = 'answer';
+		}
 		
 }
 
-var MathFunctions = {
+GF.bindUIEvents = function() {
+	var u = GF.UserInterface;
+	$('.choice').each(function(indexPicked){
+		//trigger UI events for guess
+		$(this).click(function(eventObj) {
+			if(GF.QuizState.phase === 'question') {
+				GF.QuizState.phase = 'answer';
+				//show UI events specific to right or wrong
+				GF.UserInterface.guess(indexPicked);
+				//show next question button
+				 $('#nextQuestion').click(GF.MainInterface.newQuestion);
+						
+			}
+		})
+	});
+}
+
+GF.MathFunctions = {
 		
 	identity: {
 		fn: function(x) {return x;},
@@ -124,12 +151,41 @@ var MathFunctions = {
 	sqrt: {
 		fn: function(x) {return Math.sqrt(x);},
 		str: 'sqrt(x)',
-		latex: '\\sqrt{x}'
-	}
+		latex: 'f(x)=\\sqrt{x}'
+	},
 
+	twoToTheX: {
+		fn: function(x) {return Math.pow(2,x);},
+		str: '2^x',
+		latex: 'f(x)=2^x'
+	},
+	
+	absoluteValue: {
+		fn: function(x) {return Math.abs(x);},
+		str: '|x|',
+		latex: 'f(x)=\\mid x \\mid'
+	},
+	
+	sin: {
+		fn: function(x) {return Math.sin(x)},
+		str: 'sin(x)',
+		latex: 'f(x)=\\sin(x)'
+	},
+	
+	cos: {
+		fn: function(x) {return Math.cos(x)},
+		str: 'cos(x)',
+		latex: 'f(x)=\\cos(x)'
+	},
+	
+	tan: {
+		fn: function(x) {return Math.tan(x)},
+		str: 'tan(x)',
+		latex: 'f(x)=\\tan(x)'
+	}
 }
 
-var Utils = {
+GF.Utils = {
 
 		//random number from 0 to n-1
 		randNum: function(n) {
@@ -158,25 +214,29 @@ var Utils = {
 
 
 
-var UserInterface = {
+GF.UserInterface = {
 
 	drawChart: function() {
 		//get the function that will be the right answer
-		var qs = QuizState,
-			s = Settings,
+		var qs = GF.QuizState,
+			s = GF.Settings,
 			funcToDraw = qs.choices[qs.ansIndex];
-		QuizState.chartRef = this.plot([funcToDraw], s.min, s.max, s.delta);
+		GF.QuizState.chartRef = this.plot([funcToDraw], s.min, s.max, s.delta);
 		
 	},
 	
 	writeChoices: function() {
-		$('.choice').text(function(index, text){
-			return "$$" + QuizState.choices[index].latex + "$$";
+		//write down the latex equation
+		$('.choice').each(function(indexPicked, choice){
+			$(this).text("\\(" + GF.QuizState.choices[indexPicked].latex + "\\)");
 		});
+		
+			
+		
 	},
 	
-	writeAnswer: function(){
-		$('#answer').text("$$" + QuizState.getAnswer().latex + "$$");
+	writeQuesDialog: function(){
+		$('#dialog').html("Which function has been graphed?");
 	},
 	
 	showLatex: function() {
@@ -187,40 +247,73 @@ var UserInterface = {
 		$('.latex').hide();
 	},
 	
+	
+	//tell MathJax to reparse LaTeX markup
 	refreshLatex: function() {
 		MathJax.Hub.Queue(["Typeset",MathJax.Hub]);
-		console.log('ahh refreshing');
 	},
 	
+	guess: function(indexPicked) {
+		var u = GF.UserInterface;
+		//show UI events specific to right/wrong answers
+		var isRight = (indexPicked === GF.QuizState.ansIndex);
+		isRight ? u.correctAns() : u.wrongAns(indexPicked);
+		
+		//add a next question button
+		$('<button/>', {
+			type: 'button',
+			id: 'nextQuestion'
+		}).text('Next Question')
+		  .appendTo('#dialog')
+	},
+	
+	//what to display if the right answer is picked
 	correctAns: function() {
 		//turn function green
-		var chart = QuizState.chartRef;
-		chart.replot({seriesColors: [Settings.rightColor]});
+		var chart = GF.QuizState.chartRef;
+		chart.replot({seriesColors: [GF.Settings.rightColor]});
 	
 		//turn button green
-		$('.choice').eq(QuizState.ansIndex)
-					.css('background-color', Settings.rightColor);
+		$('.choice').eq(GF.QuizState.ansIndex)
+					.css('background-color', GF.Settings.rightColor);
+		
+		//print right answer dialogue
+		$('#dialog').html("Correct! The right answer is "
+				+ "<span style=\"color:" + GF.Settings.rightColor + "\">" +
+						"\\(" + GF.QuizState.getAnswer().latex + "\\)</span>");
+		this.refreshLatex();
 	},
 	
-	wrongAns: function(index) {
+	//what to display if the wrong answer is picked
+	wrongAns: function(indexPicked) {
 		
-		var s = Settings,
+		var s = GF.Settings,
 			rightPoints
-			wrongFunc = QuizState.choices[index];
+			wrongFunc = GF.QuizState.choices[indexPicked];
 
 		//plot right answer and wrong answer on same graph
-		QuizState.chartRef = this.plot(
-				[QuizState.getAnswer(), wrongFunc],
+		GF.QuizState.chartRef = this.plot(
+				[GF.QuizState.getAnswer(), wrongFunc],
 				-10, 10, 0.1
 		)
 		//color the functions to make right/wrong clearer
-		QuizState.chartRef.replot({seriesColors: [Settings.rightColor, Settings.wrongColor]});
+		GF.QuizState.chartRef.replot({seriesColors: [GF.Settings.rightColor, GF.Settings.wrongColor]});
 	
 		//color the buttons to make right/wrong clear
-		$('.choice').eq(QuizState.ansIndex)
-					.css('background-color', Settings.rightColor);
-		$('.choice').eq(index)
-					.css('background-color', Settings.wrongColor);
+		$('.choice').eq(GF.QuizState.ansIndex)
+					.css('background-color', GF.Settings.rightColor);
+		$('.choice').eq(indexPicked)
+					.css('background-color', GF.Settings.wrongColor);
+		
+		//print message informing user of the right and wrong answer
+		$('#dialog').html(
+				"Whoops. The right answer is " +
+				"<span style=\"color:" + GF.Settings.rightColor + "\">" +
+				"\\(" + GF.QuizState.getAnswer().latex + "\\)</span>" +
+				" but you chose " + "<span style=\"color:" + GF.Settings.wrongColor + "\">" +
+				"\\(" + wrongFunc.latex + "\\)</span>."	
+		);
+		this.refreshLatex();
 		
 	},
 	
@@ -229,7 +322,7 @@ var UserInterface = {
 	},
 	
 	generatePoints: function(mathFunc) {
-		var s = Settings,
+		var s = GF.Settings,
 			points = [],
 			fn = mathFunc.fn;
 		
